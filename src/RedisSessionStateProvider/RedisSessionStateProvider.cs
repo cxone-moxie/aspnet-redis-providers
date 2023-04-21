@@ -58,7 +58,7 @@ namespace Microsoft.Web.Redis
 
         private void GetAccessToStore(string id) 
         {
-            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "GetAccessToStore => Session Id: {0}", id);
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:GetAccessToStore => Session Id: {0}", id);
             if (cache == null)
             {
                 cache = new RedisConnectionWrapper(configuration, id);
@@ -71,7 +71,7 @@ namespace Microsoft.Web.Redis
 
         public override void Initialize(string name, System.Collections.Specialized.NameValueCollection config)
         {
-            logger.Info("WorkerProcessId: " + workerProcessId + " : " + " Initialize => Initialize RedisSessionStateProvider");
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + " RedisSessionStateProvider:Initialize => Initialize RedisSessionStateProvider");
             if (config == null)
             { 
                 throw new ArgumentNullException("config");
@@ -135,12 +135,12 @@ namespace Microsoft.Web.Redis
                     sessionTimeoutInSeconds = (int)configuration.SessionTimeout.TotalSeconds;
                 }
 
-                logger.Info("WorkerProcessId: " + workerProcessId + " : " + "EndRequestAsync=> Session Id: {0} , sessionTimeoutInSeconds: {1}", sessionId, sessionTimeoutInSeconds);
+                logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:EndRequestAsync=> Session Id: {0} , sessionTimeoutInSeconds: {1}", sessionId, sessionTimeoutInSeconds);
                 if (sessionId != null && sessionLockId != null)
                 {
                     GetAccessToStore(sessionId);
                     cache.TryReleaseLockIfLockIdMatch(sessionLockId, sessionTimeoutInSeconds);
-                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "EndRequestAsync => Session Id: {0}, Session provider object: {1} => Lock Released with lockId {2}.", sessionId, this.GetHashCode(), sessionLockId);
+                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:EndRequestAsync => Session Id: {0}, Session provider object: {1} => Lock Released with lockId {2}.", sessionId, this.GetHashCode(), sessionLockId);
                     LogUtility.LogInfo("EndRequest => Session Id: {0}, Session provider object: {1} => Lock Released with lockId {2}.", sessionId, this.GetHashCode(), sessionLockId);
                     sessionId = null;
                     sessionLockId = null;
@@ -149,6 +149,7 @@ namespace Microsoft.Web.Redis
             }
             catch (Exception e)
             {
+                logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:EndRequestAsync => Error: {0}", e.ToString());
                 LogUtility.LogError("EndRequest => {0}", e.ToString());
                 LastException = e;
                 if (configuration.ThrowOnError)
@@ -162,7 +163,7 @@ namespace Microsoft.Web.Redis
         public override SessionStateStoreData CreateNewStoreData(HttpContextBase context, int timeout)
         {
             //Creating empty session store data and return it. 
-            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "CreateNewStoreData => Session provider object: {0}.", this.GetHashCode());
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:CreateNewStoreData => Session provider object: {0}.", this.GetHashCode());
             LogUtility.LogInfo("CreateNewStoreData => Session provider object: {0}.", this.GetHashCode());
             return new SessionStateStoreData(new ChangeTrackingSessionStateItemCollection(redisUtility), new HttpStaticObjectsCollection(), timeout);
         }
@@ -173,7 +174,7 @@ namespace Microsoft.Web.Redis
             {
                 if (LastException == null)
                 {
-                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "CreateUninitializedItemAsync => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
+                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:CreateUninitializedItemAsync => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
                     LogUtility.LogInfo("CreateUninitializedItem => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
                     ISessionStateItemCollection sessionData = new ChangeTrackingSessionStateItemCollection(redisUtility);
                     sessionData["SessionStateActions"] = SessionStateActions.InitializeItem;
@@ -184,7 +185,7 @@ namespace Microsoft.Web.Redis
             }
             catch (Exception e)
             {
-                logger.Info("WorkerProcessId: " + workerProcessId + " : " + "CreateUninitializedItemAsync => Error: {0}", e.ToString());
+                logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:CreateUninitializedItemAsync => Error: {0}", e.ToString());
                 LogUtility.LogError("CreateUninitializedItem => {0}", e.ToString());
                 LastException = e;
                 if (configuration.ThrowOnError)
@@ -197,7 +198,7 @@ namespace Microsoft.Web.Redis
 
         public override async Task<GetItemResult> GetItemAsync(HttpContextBase context, string id, CancellationToken cancellationToken)
         {
-            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "GetItemAsync => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:GetItemAsync => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
             LogUtility.LogInfo("GetItem => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
             bool locked;
             TimeSpan lockAge;
@@ -209,7 +210,7 @@ namespace Microsoft.Web.Redis
 
         public override async Task<GetItemResult> GetItemExclusiveAsync(HttpContextBase context, string id, CancellationToken cancellationToken)
         {
-            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "GetItemExclusiveAsync => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:GetItemExclusiveAsync => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
             LogUtility.LogInfo("GetItemExclusive => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
             bool locked;
             TimeSpan lockAge;
@@ -223,7 +224,7 @@ namespace Microsoft.Web.Redis
         {
             try
             {
-                logger.Info("WorkerProcessId: " + workerProcessId + " : " + "GetItemFromSessionStore => Session Id: {0}", id);
+                logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:GetItemFromSessionStore => Session Id: {0}", id);
                 SessionStateStoreData sessionStateStoreData = null;
                 locked = false;
                 lockAge = TimeSpan.Zero;
@@ -253,7 +254,7 @@ namespace Microsoft.Web.Redis
                 if (isLockTaken)
                 {
                     locked = false;
-                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "GetItemFromSessionStore => Session Id: {0}, Session provider object: {1} => Lock taken with lockId: {2}, Session Timeout: {3}", id, this.GetHashCode(), lockId, sessionTimeout);
+                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:GetItemFromSessionStore => Session Id: {0}, Session provider object: {1} => Lock taken with lockId: {2}, Session Timeout: {3}", id, this.GetHashCode(), lockId, sessionTimeout);
                     LogUtility.LogInfo("GetItemFromSessionStore => Session Id: {0}, Session provider object: {1} => Lock taken with lockId: {2}", id, this.GetHashCode(), lockId);
                 }
                 else
@@ -261,7 +262,7 @@ namespace Microsoft.Web.Redis
                     sessionId = null;
                     sessionLockId = null;
                     locked = true;
-                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "GetItemFromSessionStore => Session Id: {0}, Session provider object: {1} => Can not lock, Someone else has lock and lockId is {2}, Session Timeout: {3}", id, this.GetHashCode(), lockId, sessionTimeout);
+                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:GetItemFromSessionStore => Session Id: {0}, Session provider object: {1} => Can not lock, Someone else has lock and lockId is {2}, Session Timeout: {3}", id, this.GetHashCode(), lockId, sessionTimeout);
                     LogUtility.LogInfo("GetItemFromSessionStore => Session Id: {0}, Session provider object: {1} => Can not lock, Someone else has lock and lockId is {2}", id, this.GetHashCode(), lockId);
                 }
 
@@ -278,7 +279,7 @@ namespace Microsoft.Web.Redis
                 {
                     // If session data do not exists means it might be exipred and removed. So return null so that asp.net can call CreateUninitializedItem and start again.
                     // But we just locked the record so first release it
-                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "GetItemFromSessionStore => Session data is null.");
+                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:GetItemFromSessionStore => Session data is null.");
                     ReleaseItemExclusiveAsync(context, id, lockId, cancellationToken).Wait();
                     return null;
                 }
@@ -296,7 +297,7 @@ namespace Microsoft.Web.Redis
             }
             catch (Exception e)
             {
-                logger.Info("WorkerProcessId: " + workerProcessId + " : " + "GetItemFromSessionStore => Error: {0}", e.ToString());
+                logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:GetItemFromSessionStore => Error: {0}", e.ToString());
                 LogUtility.LogError("GetItemFromSessionStore => {0}", e.ToString());
                 locked = false;
                 lockId = null;
@@ -317,7 +318,7 @@ namespace Microsoft.Web.Redis
             {
                 if (LastException == null)
                 {
-                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "ResetItemTimeoutAsync => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
+                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:ResetItemTimeoutAsync => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
                     LogUtility.LogInfo("ResetItemTimeout => Session Id: {0}, Session provider object: {1}.", id, this.GetHashCode());
                     GetAccessToStore(id);
                     cache.UpdateExpiryTime((int)configuration.SessionTimeout.TotalSeconds);
@@ -326,7 +327,7 @@ namespace Microsoft.Web.Redis
             }
             catch (Exception e)
             {
-                logger.Error("WorkerProcessId: " + workerProcessId + " : " + "ResetItemTimeoutAsync => Error: {0}", e.ToString());
+                logger.Error("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:ResetItemTimeoutAsync => Error: {0}", e.ToString());
                 LogUtility.LogError("ResetItemTimeout => {0}", e.ToString());
                 LastException = e;
                 if (configuration.ThrowOnError)
@@ -343,7 +344,7 @@ namespace Microsoft.Web.Redis
             {
                 if (LastException == null)
                 {
-                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RemoveItemAsync => Session Id: {0}, Session provider object: {1}, Lock ID: {2}.", id, this.GetHashCode(), lockId);
+                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:RemoveItemAsync => Session Id: {0}, Session provider object: {1}, Lock ID: {2}.", id, this.GetHashCode(), lockId);
                     LogUtility.LogInfo("RemoveItem => Session Id: {0}, Session provider object: {1}, Lock ID: {2}.", id, this.GetHashCode(), lockId);
                     GetAccessToStore(id);
                     cache.TryRemoveAndReleaseLock(lockId);
@@ -351,7 +352,7 @@ namespace Microsoft.Web.Redis
             }
             catch (Exception e)
             {
-                logger.Error("WorkerProcessId: " + workerProcessId + " : " + "RemoveItemAsync => {0}", e.ToString());
+                logger.Error("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:RemoveItemAsync => {0}", e.ToString());
                 LogUtility.LogError("RemoveItem => {0}", e.ToString());
                 LastException = e;
                 if (configuration.ThrowOnError)
@@ -379,7 +380,7 @@ namespace Microsoft.Web.Redis
 
                 if (LastException == null && lockId != null)
                 {
-                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "ReleaseItemExclusiveAsync => Session Id: {0}, Session provider object: {1} => For lockId: {2}.", id, this.GetHashCode(), lockId);
+                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:ReleaseItemExclusiveAsync => Session Id: {0}, Session provider object: {1} => For lockId: {2}.", id, this.GetHashCode(), lockId);
                     LogUtility.LogInfo("ReleaseItemExclusive => Session Id: {0}, Session provider object: {1} => For lockId: {2}.", id, this.GetHashCode(), lockId);
                     GetAccessToStore(id);
                     cache.TryReleaseLockIfLockIdMatch(lockId, sessionTimeoutInSeconds);
@@ -392,7 +393,7 @@ namespace Microsoft.Web.Redis
             }
             catch (Exception e)
             {
-                logger.Error("WorkerProcessId: " + workerProcessId + " : " + "ReleaseItemExclusiveAsync => {0}", e.ToString());
+                logger.Error("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:ReleaseItemExclusiveAsync => {0}", e.ToString());
                 LogUtility.LogError("ReleaseItemExclusive => {0}", e.ToString());
                 LastException = e;
                 if (configuration.ThrowOnError)
@@ -430,7 +431,7 @@ namespace Microsoft.Web.Redis
 
                         // Converting timout from min to sec
                         cache.Set(sessionItems, (item.Timeout * FROM_MIN_TO_SEC));
-                        logger.Info("WorkerProcessId: " + workerProcessId + " : " + "SetAndReleaseItemExclusiveAsync => Session Id: {0}, Session provider object: {1} => created new item in session.", id, this.GetHashCode());
+                        logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:SetAndReleaseItemExclusiveAsync => Session Id: {0}, Session provider object: {1} => created new item in session.", id, this.GetHashCode());
                         LogUtility.LogInfo("SetAndReleaseItemExclusive => Session Id: {0}, Session provider object: {1} => created new item in session.", id, this.GetHashCode());
                     } // If update if lock matches
                     else
@@ -443,7 +444,7 @@ namespace Microsoft.Web.Redis
                             }
                             // Converting timout from min to sec
                             cache.TryUpdateAndReleaseLock(lockId, item.Items, (item.Timeout * FROM_MIN_TO_SEC));
-                            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "SetAndReleaseItemExclusiveAsync => Session Id: {0}, Session provider object: {1} => updated item in session, Lock ID: {2}.", id, this.GetHashCode(), lockId);
+                            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:SetAndReleaseItemExclusiveAsync => Session Id: {0}, Session provider object: {1} => updated item in session, Lock ID: {2}.", id, this.GetHashCode(), lockId);
                             LogUtility.LogInfo("SetAndReleaseItemExclusive => Session Id: {0}, Session provider object: {1} => updated item in session, Lock ID: {2}.", id, this.GetHashCode(), lockId);
                         }
                     }
@@ -451,7 +452,7 @@ namespace Microsoft.Web.Redis
             }
             catch (Exception e)
             {
-                logger.Error("WorkerProcessId: " + workerProcessId + " : " + "SetAndReleaseItemExclusiveAsync => {0}", e.ToString());
+                logger.Error("WorkerProcessId: " + workerProcessId + " : " + "RedisSessionStateProvider:SetAndReleaseItemExclusiveAsync => {0}", e.ToString());
                 LogUtility.LogError("SetAndReleaseItemExclusive => {0}", e.ToString());
                 LastException = e;
                 if (configuration.ThrowOnError)
