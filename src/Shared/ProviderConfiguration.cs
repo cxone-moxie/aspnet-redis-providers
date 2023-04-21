@@ -123,7 +123,7 @@ namespace Microsoft.Web.Redis
                 {
                     ApplicationName = "/";
                     string workerProcessId = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
-                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "ProviderConfiguration => Error: {0}", e.ToString());
+                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "ProviderConfiguration:ProviderConfiguration => Error: {0}", e.ToString());
                     LogUtility.LogInfo(e.Message);
                 }
             }

@@ -36,7 +36,7 @@ namespace Microsoft.Web.Redis
 
         public bool Expiry(string key, int timeInSeconds)
         {
-            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "Expiry => Key: {0}", key);
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "StackExchangeClientConnection:Expiry => Key: {0}", key);
             TimeSpan timeSpan = new TimeSpan(0, 0, timeInSeconds);
             RedisKey redisKey = key;
             return (bool)RetryLogic(() => RealConnection.KeyExpire(redisKey,timeSpan));
@@ -204,7 +204,7 @@ namespace Microsoft.Web.Redis
 
         public void Set(string key, byte[] data, DateTime utcExpiry)
         {
-            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "SET => Key: {0}", key);
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "StackExchangeClientConnection:SET => Key: {0}", key);
             RedisKey redisKey = key;
             RedisValue redisValue = data;
             TimeSpan timeSpanForExpiry = utcExpiry - DateTime.UtcNow;
@@ -213,7 +213,7 @@ namespace Microsoft.Web.Redis
 
         public byte[] Get(string key)
         {
-            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "Get => Key: {0}", key);
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "StackExchangeClientConnection:Get => Key: {0}", key);
             RedisKey redisKey = key;
             RedisValue redisValue = (RedisValue) OperationExecutor(() => RealConnection.StringGet(redisKey));
             return (byte[]) redisValue;
@@ -221,7 +221,7 @@ namespace Microsoft.Web.Redis
 
         public void Remove(string key)
         {
-            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "Remove => Key: {0}", key);
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "StackExchangeClientConnection:Remove => Key: {0}", key);
             RedisKey redisKey = key;
             OperationExecutor(() => RealConnection.KeyDelete(redisKey));
         }
