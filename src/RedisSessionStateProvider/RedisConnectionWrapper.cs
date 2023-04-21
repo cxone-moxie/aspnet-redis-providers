@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Web.SessionState;
+using NLog;
 
 namespace Microsoft.Web.Redis
 {
@@ -19,10 +20,14 @@ namespace Microsoft.Web.Redis
         
         internal IRedisClientConnection redisConnection;
         ProviderConfiguration configuration;
-        
+
+        private static Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        internal string workerProcessId = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
+        internal string sessionId;
 
         public RedisConnectionWrapper(ProviderConfiguration configuration, string id)
         {
+            sessionId = id;
             this.configuration = configuration;
             Keys = new KeyGenerator(id, configuration.ApplicationName);
 
@@ -43,6 +48,7 @@ namespace Microsoft.Web.Redis
 
         public TimeSpan GetLockAge(object lockId)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisConnectionWrapper:GetLockAge => sessionId: {0}", sessionId);
             // This method do not use redis 
             string lockDateTimeTicksFromLockId = lockId.ToString();
             long lockTimeTicks;
@@ -82,6 +88,7 @@ namespace Microsoft.Web.Redis
 
         public void UpdateExpiryTime(int timeToExpireInSeconds)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisConnectionWrapper:UpdateExpiryTime => sessionId: {0}, expiryTime: {1}", sessionId, timeToExpireInSeconds.ToString());
             string[] keyArgs = new string[] { Keys.DataKey, Keys.InternalKey };
             object[] valueArgs = new object[1];
             valueArgs[0] = timeToExpireInSeconds;
@@ -107,6 +114,7 @@ namespace Microsoft.Web.Redis
 
         private bool SetPrepare(ISessionStateItemCollection data, int sessionTimeout, out string[] keyArgs, out object[] valueArgs)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisConnectionWrapper:SetPrepare => sessionId: {0}, sessionTimeout: {1}", sessionId, sessionTimeout.ToString());
             keyArgs = null;
             valueArgs = null;
             if (data != null && data.Count > 0)
@@ -128,6 +136,7 @@ namespace Microsoft.Web.Redis
 
         public void Set(ISessionStateItemCollection data, int sessionTimeout)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisConnectionWrapper:Set => sessionId: {0}, sessionTimeout: {1}", sessionId, sessionTimeout.ToString());
             string[] keyArgs;
             object[] valueArgs;
             if (SetPrepare(data, sessionTimeout, out keyArgs, out valueArgs))
@@ -176,6 +185,7 @@ namespace Microsoft.Web.Redis
 
         public bool TryTakeWriteLockAndGetData(DateTime lockTime, int lockTimeout, out object lockId, out ISessionStateItemCollection data, out int sessionTimeout)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisConnectionWrapper:TryTakeWriteLockAndGetData => sessionId: {0}", sessionId);
             string expectedLockId = lockTime.Ticks.ToString();
             object rowDataFromRedis = null;
             string[] keyArgs = new string[] { Keys.LockKey, Keys.DataKey, Keys.InternalKey };
@@ -225,6 +235,7 @@ namespace Microsoft.Web.Redis
         
         public bool TryCheckWriteLockAndGetData(out object lockId, out ISessionStateItemCollection data, out int sessionTimeout)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisConnectionWrapper:TryCheckWriteLockAndGetData => sessionId: {0}", sessionId);
             object rowDataFromRedis = null;
             string[] keyArgs = new string[] { Keys.LockKey, Keys.DataKey, Keys.InternalKey };
             object[] valueArgs = new object[] { };
@@ -252,6 +263,7 @@ namespace Microsoft.Web.Redis
         
         public void TryReleaseLockIfLockIdMatch(object lockId, int sessionTimeout)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisConnectionWrapper:TryReleaseLockIfLockIdMatch => sessionId: {0}, sessionTimeout: {1}", sessionId, sessionTimeout.ToString());
             string[] keyArgs = { Keys.LockKey, Keys.DataKey, Keys.InternalKey };
             object[] valueArgs = { lockId, sessionTimeout };
             redisConnection.Eval(releaseWriteLockIfLockMatchScript, keyArgs, valueArgs);
@@ -292,6 +304,7 @@ namespace Microsoft.Web.Redis
         
         public void TryRemoveAndReleaseLock(object lockId)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "RedisConnectionWrapper:TryRemoveAndReleaseLock => sessionId: {0}", sessionId);
             string[] keyArgs = { Keys.LockKey, Keys.DataKey, Keys.InternalKey };
             lockId = (lockId == null) ? "" : lockId;
             object[] valueArgs = { lockId.ToString() };

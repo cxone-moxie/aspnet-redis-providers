@@ -5,6 +5,7 @@
 
 using System;
 using StackExchange.Redis;
+using NLog;
 
 namespace Microsoft.Web.Redis
 {
@@ -20,6 +21,7 @@ namespace Microsoft.Web.Redis
         static object reconnectLock = new object();
         internal static TimeSpan ReconnectFrequency = TimeSpan.FromSeconds(60);
         internal static TimeSpan ReconnectErrorThreshold = TimeSpan.FromSeconds(30);
+        private static Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         // Used for mocking in testing
         internal RedisSharedConnection()
@@ -103,6 +105,10 @@ namespace Microsoft.Web.Redis
 
                     if ((elapsedSinceFirstError >= ReconnectErrorThreshold) && (elapsedSinceMostRecentError <= ReconnectErrorThreshold))
                     {
+                        logger.Info($"ForceReconnect: now: {utcNow.ToString()}");
+                        logger.Info($"ForceReconnect: elapsedSinceLastReconnect: {elapsedSinceLastReconnect.ToString()}, ReconnectFrequency: {ReconnectFrequency.ToString()}");
+                        logger.Info($"ForceReconnect: elapsedSinceFirstError: {elapsedSinceFirstError.ToString()}, elapsedSinceMostRecentError: {elapsedSinceMostRecentError.ToString()}, ReconnectErrorThreshold: {ReconnectErrorThreshold.ToString()}");
+
                         LogUtility.LogInfo($"ForceReconnect: now: {utcNow.ToString()}");
                         LogUtility.LogInfo($"ForceReconnect: elapsedSinceLastReconnect: {elapsedSinceLastReconnect.ToString()}, ReconnectFrequency: {ReconnectFrequency.ToString()}");
                         LogUtility.LogInfo($"ForceReconnect: elapsedSinceFirstError: {elapsedSinceFirstError.ToString()}, elapsedSinceMostRecentError: {elapsedSinceMostRecentError.ToString()}, ReconnectErrorThreshold: {ReconnectErrorThreshold.ToString()}");

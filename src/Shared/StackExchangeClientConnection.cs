@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Web.SessionState;
 using StackExchange.Redis;
+using NLog;
 
 namespace Microsoft.Web.Redis
 {
@@ -17,6 +18,8 @@ namespace Microsoft.Web.Redis
         ProviderConfiguration _configuration;
         RedisUtility _redisUtility;
         RedisSharedConnection _sharedConnection;
+        private static Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        internal string workerProcessId = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
 
         public StackExchangeClientConnection(ProviderConfiguration configuration, RedisUtility redisUtility, RedisSharedConnection sharedConnection)
         {
@@ -33,6 +36,7 @@ namespace Microsoft.Web.Redis
 
         public bool Expiry(string key, int timeInSeconds)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "Expiry => Key: {0}", key);
             TimeSpan timeSpan = new TimeSpan(0, 0, timeInSeconds);
             RedisKey redisKey = key;
             return (bool)RetryLogic(() => RealConnection.KeyExpire(redisKey,timeSpan));
@@ -200,6 +204,7 @@ namespace Microsoft.Web.Redis
 
         public void Set(string key, byte[] data, DateTime utcExpiry)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "SET => Key: {0}", key);
             RedisKey redisKey = key;
             RedisValue redisValue = data;
             TimeSpan timeSpanForExpiry = utcExpiry - DateTime.UtcNow;
@@ -208,6 +213,7 @@ namespace Microsoft.Web.Redis
 
         public byte[] Get(string key)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "Get => Key: {0}", key);
             RedisKey redisKey = key;
             RedisValue redisValue = (RedisValue) OperationExecutor(() => RealConnection.StringGet(redisKey));
             return (byte[]) redisValue;
@@ -215,6 +221,7 @@ namespace Microsoft.Web.Redis
 
         public void Remove(string key)
         {
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "Remove => Key: {0}", key);
             RedisKey redisKey = key;
             OperationExecutor(() => RealConnection.KeyDelete(redisKey));
         }
