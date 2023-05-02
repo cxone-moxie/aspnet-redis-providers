@@ -10,6 +10,7 @@ using System.IO;
 using System.Reflection;
 using System.Web.Configuration;
 using System.Web.Hosting;
+using NLog;
 
 namespace Microsoft.Web.Redis
 {
@@ -30,6 +31,8 @@ namespace Microsoft.Web.Redis
         public string ConnectionString { get; set; }
         public string RedisSerializerType { get; set; }
 
+        private static Logger logger = NLog.LogManager.GetCurrentClassLogger();        
+
         /* Empty constructor required for testing */
         internal ProviderConfiguration()
         {}
@@ -37,7 +40,8 @@ namespace Microsoft.Web.Redis
         internal static ProviderConfiguration ProviderConfigurationForSessionState(NameValueCollection config)
         {
             ProviderConfiguration configuration = new ProviderConfiguration(config);
-            
+            string workerProcessId = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
+
             configuration.ThrowOnError = GetBoolSettings(config, "throwOnError", true);
             int retryTimeoutInMilliSec = GetIntSettings(config, "retryTimeoutInMilliseconds", 5000);
             configuration.RetryTimeout = new TimeSpan(0, 0, 0, 0, retryTimeoutInMilliSec);
@@ -50,6 +54,9 @@ namespace Microsoft.Web.Redis
             SessionStateSection sessionStateSection = (SessionStateSection)WebConfigurationManager.GetSection("system.web/sessionState");
             configuration.SessionTimeout = sessionStateSection.Timeout;
 
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "Host: {0}, Port: {1}, ThrowOnError: {2}, UseSsl: {3}, RetryTimeout: {4}, DatabaseId: {5}, ApplicationName: {6}, RequestTimeout: {7}, SessionTimeout: {8}",
+                                            configuration.Host, configuration.Port, configuration.ThrowOnError, configuration.UseSsl, configuration.RetryTimeout, configuration.DatabaseId, configuration.ApplicationName, configuration.RequestTimeout, configuration.SessionTimeout);
+
             LogUtility.LogInfo("Host: {0}, Port: {1}, ThrowOnError: {2}, UseSsl: {3}, RetryTimeout: {4}, DatabaseId: {5}, ApplicationName: {6}, RequestTimeout: {7}, SessionTimeout: {8}",
                                             configuration.Host, configuration.Port, configuration.ThrowOnError, configuration.UseSsl, configuration.RetryTimeout, configuration.DatabaseId, configuration.ApplicationName, configuration.RequestTimeout, configuration.SessionTimeout);
             return configuration;
@@ -58,7 +65,8 @@ namespace Microsoft.Web.Redis
         internal static ProviderConfiguration ProviderConfigurationForOutputCache(NameValueCollection config)
         {
             ProviderConfiguration configuration = new ProviderConfiguration(config);
-            
+            string workerProcessId = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
+
             // No retry login for output cache provider
             configuration.RetryTimeout = TimeSpan.Zero;
             
@@ -66,6 +74,9 @@ namespace Microsoft.Web.Redis
             configuration.ThrowOnError = true;
             configuration.RequestTimeout = TimeSpan.Zero;
             configuration.SessionTimeout = TimeSpan.Zero;
+
+            logger.Info("WorkerProcessId: " + workerProcessId + " : " + "Host: {0}, Port: {1}, UseSsl: {2}, DatabaseId: {3}, ApplicationName: {4}",
+                                            configuration.Host, configuration.Port, configuration.UseSsl, configuration.DatabaseId, configuration.ApplicationName);
 
             LogUtility.LogInfo("Host: {0}, Port: {1}, UseSsl: {2}, DatabaseId: {3}, ApplicationName: {4}",
                                             configuration.Host, configuration.Port, configuration.UseSsl, configuration.DatabaseId, configuration.ApplicationName);
@@ -111,6 +122,8 @@ namespace Microsoft.Web.Redis
                 catch (Exception e)
                 {
                     ApplicationName = "/";
+                    string workerProcessId = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
+                    logger.Info("WorkerProcessId: " + workerProcessId + " : " + "ProviderConfiguration:ProviderConfiguration => Error: {0}", e.ToString());
                     LogUtility.LogInfo(e.Message);
                 }
             }
